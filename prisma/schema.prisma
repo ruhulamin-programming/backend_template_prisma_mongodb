@@ -1,0 +1,46 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  fullName     String
+  email        String     @unique
+  password     String
+  fcmToken     String?
+  profileImage String?
+  profession   String?
+  bio          String?
+  phoneNumber  String?
+  gender       Gender     @default(Other)
+  dob          DateTime?
+  address      String?
+  role         UserRole   @default(User)
+  status       UserStatus @default(Active)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("users")
+}
+
+enum UserStatus {
+  Active
+  Blocked
+  Deleted
+}
+
+enum UserRole {
+  User
+  Admin
+}
+
+enum Gender {
+  Male
+  Female
+  Other
+}
