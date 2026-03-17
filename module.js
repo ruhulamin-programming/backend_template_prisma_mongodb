@@ -30,8 +30,7 @@ const capModule = capitalize(moduleName);
 
 const files = {
   [`${moduleName}.service.ts`]: `
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from "../../../shared/prisma";
 
 const create${capModule} = async (data: any) => {
   await prisma.${moduleName}.create({ data });
