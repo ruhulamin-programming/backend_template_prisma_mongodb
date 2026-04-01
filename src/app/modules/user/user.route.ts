@@ -15,6 +15,5 @@ router.post(
   validateRequest(userValidation.verificationSchema),
   UserControllers.signupVerification,
 );
-router.get("/:id", UserControllers.getSingleUser);
 
 export const userRoutes = router;

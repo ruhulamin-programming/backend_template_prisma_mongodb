@@ -23,16 +23,6 @@ const googleLogin = catchAsync(async (req, res) => {
   });
 });
 
-const userLocationUpdateInRedis = catchAsync(async (req, res) => {
-  const { id } = req.user;
-  await authService.userLocationUpdateInRedis(id, req.body);
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: "Your location updated successfully",
-  });
-});
-
 const sendForgotPasswordOtp = catchAsync(
   async (req: Request, res: Response) => {
     const email = req.body.email as string;
@@ -122,7 +112,6 @@ export const authController = {
   googleLogin,
   myProfile,
   updateProfile,
-  userLocationUpdateInRedis,
   sendForgotPasswordOtp,
   verifyForgotPasswordOtpCode,
   resetPassword,

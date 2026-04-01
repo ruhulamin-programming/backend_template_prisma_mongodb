@@ -22,18 +22,7 @@ const signupVerification = catchAsync(async (req, res) => {
   });
 });
 
-const getSingleUser = catchAsync(async (req, res) => {
-  const user = await userService.getSingleUser(req.params.id);
-  sendResponse(res, {
-    success: true,
-    statusCode: 200,
-    message: "User retrieved successfully",
-    data: user,
-  });
-});
-
 export const UserControllers = {
   createUser,
   signupVerification,
-  getSingleUser,
 };

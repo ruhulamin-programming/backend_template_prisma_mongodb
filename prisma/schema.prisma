@@ -28,6 +28,21 @@ model User {
   @@map("users")
 }
 
+model PendingUser {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  fullName  String
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model Otp {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  otp       String
+  expiresAt DateTime
+}
+
 enum UserStatus {
   Active
   Blocked

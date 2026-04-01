@@ -5,8 +5,8 @@ import router from "./app/routes";
 import GlobalErrorHandler from "./app/middlewares/globalErrorHandler";
 import path from "path";
 import prisma from "./shared/prisma";
-import { bullBoardRouter } from "./bullBoard";
-import basicAuth from "express-basic-auth";
+// import { bullBoardRouter } from "./bullBoard";
+// import basicAuth from "express-basic-auth";
 
 const app: Application = express();
 
@@ -32,17 +32,22 @@ app.get("/", (req: Request, res: Response) => {
     Message: "Welcome to api main route",
   });
 });
+app.get("/api/v1", (req: Request, res: Response) => {
+  res.send({
+    Message: "Welcome to api version 1",
+  });
+});
 
 // Router setup
 app.use("/api/v1", router);
-app.use(
-  "/admin/queues",
-  basicAuth({
-    users: { admin: process.env.BULLBOARD_PASSWORD || "supersecret" },
-    challenge: true,
-  }),
-  bullBoardRouter
-);
+// app.use(
+//   "/admin/queues",
+//   basicAuth({
+//     users: { admin: process.env.BULLBOARD_PASSWORD || "supersecret" },
+//     challenge: true,
+//   }),
+//   bullBoardRouter
+// );
 
 // Global Error Handler
 app.use(GlobalErrorHandler);

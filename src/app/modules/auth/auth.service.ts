@@ -5,9 +5,9 @@ import { jwtHelpers } from "../../../helpers/jwtHelpers";
 import config from "../../../config";
 import { User } from "@prisma/client";
 import generateOTP from "../../../helpers/generateOtp";
-import redisClient from "../../../helpers/redis";
 import { uploadInSpace } from "../../../helpers/uploadInSpace";
 import { emailQueue } from "../../../queues/emailQueue";
+import sendEmail from "../../../helpers/sendEmail";
 
 const loginUserIntoDB = async (payload: {
   email: string;
@@ -101,23 +101,6 @@ const googleLogin = async (payload: {
   };
 };
 
-const userLocationUpdateInRedis = async (
-  userId: string,
-  userLocation: { longitude: number; latitude: number },
-) => {
-  const redisGeoKey = "userLocations";
-
-  // Use GEOADD to store location
-  await redisClient.geoadd(
-    redisGeoKey,
-    userLocation.longitude,
-    userLocation.latitude,
-    userId,
-  );
-
-  return;
-};
-
 const sendForgotPasswordOtpDB = async (email: string) => {
   const existringUser = await prisma.user.findUnique({
     where: {
@@ -129,13 +112,23 @@ const sendForgotPasswordOtpDB = async (email: string) => {
   }
   const otp = generateOTP();
 
-  await redisClient.set(`otp:${email}`, otp, "EX", 300);
-
-  await emailQueue.add("forgotPasswordOtp", {
-    email: existringUser.email,
-    fullName: existringUser.fullName,
-    otp: otp,
+  await prisma.otp.upsert({
+    where: { email },
+    update: { otp, expiresAt: new Date(Date.now() + 5 * 60 * 1000) },
+    create: { email, otp, expiresAt: new Date(Date.now() + 5 * 60 * 1000) },
   });
+
+  const emailSubject = "Your Password Reset OTP";
+  const emailHtml = `<div style="font-family: Arial, sans-serif; color: #333;">
+        <h2>Password Reset Request</h2>
+        <p>Hi <b>${existringUser.fullName}</b>,</p>
+        <p>Your OTP for password reset is:</p>
+        <h1 style="color: #007BFF;">${otp}</h1>
+        <p>This OTP is valid for <b>5 minutes</b>. If you did not request this, please ignore this email.</p>
+        <p>Thanks, <br>The Support Team</p>
+      </div>`;
+
+  await sendEmail(email, emailSubject, emailHtml);
 
   return otp;
 };
@@ -153,16 +146,18 @@ const verifyForgotPasswordOtpCodeDB = async (payload: {
 
   const userId = user.id;
 
-  const savedOtp = await redisClient.get(`otp:${email}`);
-  if (!savedOtp) {
-    throw new ApiError(400, "Invalid or expired OTP.");
+  const savedOtpRecord = await prisma.otp.findUnique({ where: { email } });
+  if (!savedOtpRecord) {
+    throw new ApiError(400, "OTP not found. Please request a new one.");
+  }
+  if (new Date() > savedOtpRecord.expiresAt) {
+    await prisma.otp.delete({ where: { email } });
+    throw new ApiError(400, "OTP has expired. Please request a new one.");
   }
 
-  if (otp !== savedOtp) {
+  if (otp !== savedOtpRecord.otp) {
     throw new ApiError(401, "Invalid OTP.");
   }
-
-  await redisClient.del(`otp:${email}`);
 
   const forgetToken = jwtHelpers.generateToken(
     { id: userId, email },
@@ -285,7 +280,6 @@ export const authService = {
   googleLogin,
   myProfile,
   updateProfileIntoDB,
-  userLocationUpdateInRedis,
   sendForgotPasswordOtpDB,
   verifyForgotPasswordOtpCodeDB,
   resetForgotPasswordDB,

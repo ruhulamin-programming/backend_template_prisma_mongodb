@@ -12,15 +12,9 @@ router.post("/login", authController.loginUser);
 router.post(
   "/google-login",
   validateRequest(authValidation.googleLoginSchema),
-  authController.googleLogin
+  authController.googleLogin,
 );
 router.get("/profile", auth(), authController.myProfile);
-router.patch(
-  "/update/user-location",
-  auth(),
-  validateRequest(authValidation.locationUpdateSchema),
-  authController.userLocationUpdateInRedis
-);
 router.post("/send-otp", authController.sendForgotPasswordOtp);
 router.post("/verify-otp", authController.verifyForgotPasswordOtpCode);
 router.patch("/reset-password", auth(), authController.resetPassword);
@@ -29,7 +23,7 @@ router.patch(
   auth(),
   fileUploader.profileImage,
   parseBodyData,
-  authController.updateProfile
+  authController.updateProfile,
 );
 router.patch("/change-password", auth(), authController.changePassword);
 router.delete("/delete-account", auth(), authController.deleteAccount);
